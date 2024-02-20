@@ -4,6 +4,8 @@
 import numpy as np
 from numpy.typing import NDArray
 from typing import Any
+from sklearn.datasets import fetch_openml
+from sklearn.model_selection import train_test_split
 
 # ======================================================================
 
@@ -51,6 +53,13 @@ class Section2:
         NDArray[np.floating],
         NDArray[np.int32],
     ]:
+        #loading the MNIST dataset
+        mnist = fetch_openml('mnist_784')
+        X, y = mnist.data, mnist.target
+        
+        # Split X and y into train and test sets
+        Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_state=42)
+        
         answer = {}
         # Enter your code and fill the `answer`` dictionary
 
@@ -69,11 +78,10 @@ class Section2:
         # return values:
         # Xtrain, ytrain, Xtest, ytest: the data used to fill the `answer`` dictionary
 
-        # Load and prepare the mnist dataset
-        X, y, Xtest, ytest = u.prepare_data()
 
+        
         # Print out the number of elements in each class y
-        unique_train, counts_train = np.unique(y, return_counts=True)
+        unique_train, counts_train = np.unique(ytrain, return_counts=True)
         unique_test, counts_test = np.unique(ytest, return_counts=True)
 
         # Print out the number of classes for both training and testing datasets
@@ -85,13 +93,13 @@ class Section2:
         class_count_test = dict(zip(unique_test, counts_test))
 
         # Print out the length of Xtrain, Xtest, ytrain, ytest
-        length_Xtrain = len(X)
+        length_Xtrain = len(Xtrain)
         length_Xtest = len(Xtest)
-        length_ytrain = len(y)
+        length_ytrain = len(ytrain)
         length_ytest = len(ytest)
 
         # Print out the maximum value in the training and testing set
-        max_Xtrain = X.max()
+        max_Xtrain = Xtrain.max()
         max_Xtest = Xtest.max()
 
         # Fill the answer dictionary
@@ -105,7 +113,7 @@ class Section2:
         answer["length_ytest"] = length_ytest
         answer["max_Xtrain"] = max_Xtrain
         answer["max_Xtest"] = max_Xtest
-        
+
         return answer, Xtrain, ytrain, Xtest, ytest
 
     """
@@ -152,5 +160,34 @@ class Section2:
             - "class_count_test": number of elements in each class in
                                the training set (a list, not a numpy array)
         """
+        for ntrain in ntrain_list:
+            Xtrain = X[:ntrain, :]
+            ytrain = y[:ntrain]
+
+            class_count_train = [np.sum(ytrain == i) for i in range(10)]
+
+            for ntest in ntest_list:
+                Xtest_sub = Xtest[:ntest, :]
+                ytest_sub = ytest[:ntest]
+
+                # Part C
+                partC_result = self.partC(Xtrain, ytrain)
+
+                # Part D
+                partD_result = self.partD(Xtrain, ytrain)
+
+                # Part F
+                partF_result = self.partF(Xtrain, ytrain, Xtest_sub, ytest_sub)
+
+                # Storing results in the answer dictionary
+                answer[(ntrain, ntest)] = {
+                    "partC": partC_result,
+                    "partD": partD_result,
+                    "partF": partF_result,
+                    "ntrain": ntrain,
+                    "ntest": ntest,
+                    "class_count_train": class_count_train,
+                    "class_count_test": [np.sum(ytest_sub == i) for i in range(10)],
+                }        
 
         return answer
