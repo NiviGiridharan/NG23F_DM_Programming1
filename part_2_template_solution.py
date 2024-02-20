@@ -69,9 +69,43 @@ class Section2:
         # return values:
         # Xtrain, ytrain, Xtest, ytest: the data used to fill the `answer`` dictionary
 
-        Xtrain = Xtest = np.zeros([1, 1], dtype="float")
-        ytrain = ytest = np.zeros([1], dtype="int")
+        # Load and prepare the mnist dataset
+        X, y, Xtest, ytest = u.prepare_data()
 
+        # Print out the number of elements in each class y
+        unique_train, counts_train = np.unique(y, return_counts=True)
+        unique_test, counts_test = np.unique(ytest, return_counts=True)
+
+        # Print out the number of classes for both training and testing datasets
+        num_classes_train = len(unique_train)
+        num_classes_test = len(unique_test)
+
+        # Print out the number of elements in each class in the training and testing set
+        class_count_train = dict(zip(unique_train, counts_train))
+        class_count_test = dict(zip(unique_test, counts_test))
+
+        # Print out the length of Xtrain, Xtest, ytrain, ytest
+        length_Xtrain = len(X)
+        length_Xtest = len(Xtest)
+        length_ytrain = len(y)
+        length_ytest = len(ytest)
+
+        # Print out the maximum value in the training and testing set
+        max_Xtrain = X.max()
+        max_Xtest = Xtest.max()
+
+        # Fill the answer dictionary
+        answer["nb_classes_train"] = num_classes_train
+        answer["nb_classes_test"] = num_classes_test
+        answer["class_count_train"] = class_count_train
+        answer["class_count_test"] = class_count_test
+        answer["length_Xtrain"] = length_Xtrain
+        answer["length_Xtest"] = length_Xtest
+        answer["length_ytrain"] = length_ytrain
+        answer["length_ytest"] = length_ytest
+        answer["max_Xtrain"] = max_Xtrain
+        answer["max_Xtest"] = max_Xtest
+        
         return answer, Xtrain, ytrain, Xtest, ytest
 
     """
