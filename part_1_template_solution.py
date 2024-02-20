@@ -188,15 +188,27 @@ class Section1:
         X: NDArray[np.floating],
         y: NDArray[np.int32],
     ):
-        # Answer: built on the structure of partC
-        # `answer` is a dictionary with keys set to each split, in this case: 2, 5, 8, 16
-        # Therefore, `answer[k]` is a dictionary with keys: 'scores', 'cv', 'clf`
-
+        k_values = [2, 5, 8, 16]
         answer = {}
 
-        # Enter your code, construct the `answer` dictionary, and return it.
+        for k in k_values:
+            clf = DecisionTreeClassifier(random_state=42)
+            cv = KFold(n_splits=k, shuffle=True, random_state=42)
+            cv_results = cross_validate(clf, X, y, cv=cv, return_train_score=False)
 
-        return answer
+            mean_accuracy = np.mean(cv_results['test_score'])
+            std_accuracy = np.std(cv_results['test_score'])
+
+            answer[k] = {
+                "clf": clf,
+                "cv": cv,
+                "scores": {
+                    "mean_accuracy": mean_accuracy,
+                    "std_accuracy": std_accuracy
+                }
+            }
+
+    return answer
 
     # ----------------------------------------------------------------------
     """
@@ -222,19 +234,46 @@ class Section1:
 
         answer = {}
 
-        # Enter your code, construct the `answer` dictionary, and return it.
+        # Decision Tree Classifier
+        clf_DT = DecisionTreeClassifier(random_state=42)
+        cv = KFold(n_splits=5, shuffle=True, random_state=42)
+        cv_results_DT = cross_validate(clf_DT, X, y, cv=cv, return_train_score=False)
 
-        """
-         Answer is a dictionary with the following keys: 
-            "clf_RF",  # Random Forest class instance
-            "clf_DT",  # Decision Tree class instance
-            "cv",  # Cross validator class instance
-            "scores_RF",  Dictionary with keys: "mean_fit_time", "std_fit_time", "mean_accuracy", "std_accuracy"
-            "scores_DT",  Dictionary with keys: "mean_fit_time", "std_fit_time", "mean_accuracy", "std_accuracy"
-            "model_highest_accuracy" (string)
-            "model_lowest_variance" (float)
-            "model_fastest" (float)
-        """
+        # Random Forest Classifier
+        clf_RF = RandomForestClassifier(random_state=42)
+        cv_results_RF = cross_validate(clf_RF, X, y, cv=cv, return_train_score=False)
+
+        # Extracting mean accuracy and standard deviation for both classifiers
+        mean_accuracy_DT = np.mean(cv_results_DT['test_score'])
+        std_accuracy_DT = np.std(cv_results_DT['test_score'])
+
+        mean_accuracy_RF = np.mean(cv_results_RF['test_score'])
+        std_accuracy_RF = np.std(cv_results_RF['test_score'])
+
+        # Determining which model has the highest accuracy on average
+        model_highest_accuracy = "Random Forest" if mean_accuracy_RF > mean_accuracy_DT else "Decision Tree"
+
+        # Determining which model has the lowest variance on average
+        model_lowest_variance = "Random Forest" if std_accuracy_RF < std_accuracy_DT else "Decision Tree"
+
+        # Comparing training time between the two models
+        mean_fit_time_DT = np.mean(cv_results_DT['fit_time'])
+        mean_fit_time_RF = np.mean(cv_results_RF['fit_time'])
+
+        # Determining which model is faster to train
+        model_fastest = "Random Forest" if mean_fit_time_RF < mean_fit_time_DT else "Decision Tree"
+
+        # Constructing the answer dictionary
+        answer["clf_DT"] = clf_DT
+        answer["clf_RF"] = clf_RF
+        answer["cv"] = cv
+        answer["scores_DT"] = {'mean_fit_time': mean_fit_time_DT, 'std_fit_time': std_fit_time_DT,
+                               'mean_accuracy': mean_accuracy_DT, 'std_accuracy': std_accuracy_DT}
+        answer["scores_RF"] = {'mean_fit_time': mean_fit_time_RF, 'std_fit_time': std_fit_time_RF,
+                               'mean_accuracy': mean_accuracy_RF, 'std_accuracy': std_accuracy_RF}
+        answer["model_highest_accuracy"] = model_highest_accuracy
+        answer["model_lowest_variance"] = model_lowest_variance
+        answer["model_fastest"] = model_fastest
 
         return answer
 
@@ -293,34 +332,53 @@ class Section1:
 
         answer = {}
 
-        # Enter your code, construct the `answer` dictionary, and return it.
+        # Random Forest Classifier with default parameters
+        clf = RandomForestClassifier(random_state=42)
+    
+        # Grid of hyperparameters to search
+        param_grid = {
+            'criterion': ['gini', 'entropy'],
+            'max_depth': [None, 10, 20],
+            'min_samples_split': [2, 5, 10],
+            'min_samples_leaf': [1, 2, 4],
+            'max_features': ['auto', 'sqrt', 'log2']
+        }
 
-        """
-           `answer`` is a dictionary with the following keys: 
-            
-            "clf", base estimator (classifier model) class instance
-            "default_parameters",  dictionary with default parameters 
-                                   of the base estimator
-            "best_estimator",  classifier class instance with the best
-                               parameters (read documentation)
-            "grid_search",  class instance of GridSearchCV, 
-                            used for hyperparameter search
-            "mean_accuracy_cv",  mean accuracy score from cross 
-                                 validation (which is used by GridSearchCV)
-            "confusion_matrix_train_orig", confusion matrix of training 
-                                           data with initial estimator 
-                                (rows: true values, cols: predicted values)
-            "confusion_matrix_train_best", confusion matrix of training data 
-                                           with best estimator
-            "confusion_matrix_test_orig", confusion matrix of test data
-                                          with initial estimator
-            "confusion_matrix_test_best", confusion matrix of test data
-                                            with best estimator
-            "accuracy_orig_full_training", accuracy computed from `confusion_matrix_train_orig'
-            "accuracy_best_full_training"
-            "accuracy_orig_full_testing"
-            "accuracy_best_full_testing"
-               
-        """
+        # Grid search to find best hyperparameters
+        grid_search = GridSearchCV(clf, param_grid, cv=5, n_jobs=-1)
+        grid_search.fit(X, y)
+
+        # Extracting best estimator and its parameters
+        best_estimator = grid_search.best_estimator_
+        best_parameters = grid_search.best_params_
+
+        # Training the classifier on all training data
+        best_estimator.fit(X, y)
+
+        # Predicting on training and test data
+        y_train_pred = best_estimator.predict(X)
+        y_test_pred = best_estimator.predict(Xtest)
+
+        # Computing accuracy scores
+        accuracy_train_orig = accuracy_score(y, y_train_pred)
+        accuracy_test_orig = accuracy_score(ytest, y_test_pred)
+
+        # Confusion matrices
+        confusion_matrix_train_orig = confusion_matrix(y, y_train_pred)
+        confusion_matrix_test_orig = confusion_matrix(ytest, y_test_pred)
+
+        # Extracting accuracy scores from cross-validation
+        mean_accuracy_cv = grid_search.best_score_
+
+        # Constructing the answer dictionary
+        answer["clf"] = clf
+        answer["default_parameters"] = clf.get_params()
+        answer["best_estimator"] = best_estimator
+        answer["grid_search"] = grid_search
+        answer["mean_accuracy_cv"] = mean_accuracy_cv
+        answer["confusion_matrix_train_orig"] = confusion_matrix_train_orig
+        answer["confusion_matrix_test_orig"] = confusion_matrix_test_orig
+        answer["accuracy_orig_full_training"] = accuracy_train_orig
+        answer["accuracy_orig_full_testing"] = accuracy_test_orig
 
         return answer
