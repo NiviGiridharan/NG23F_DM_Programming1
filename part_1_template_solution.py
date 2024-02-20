@@ -96,12 +96,12 @@ class Section1:
 
         # Enter your code and fill the `answer` dictionary
 
-        answer["length_Xtrain"] = None  # Number of samples
-        answer["length_Xtest"] = None
-        answer["length_ytrain"] = None
-        answer["length_ytest"] = None
-        answer["max_Xtrain"] = None
-        answer["max_Xtest"] = None
+        answer["length_Xtrain"] = len(Xtrain)
+        answer["length_Xtest"] = len(Xtest)
+        answer["length_ytrain"] = len(ytrain)
+        answer["length_ytest"] = len(ytest)
+        answer["max_Xtrain"] = Xtrain.max()
+        answer["max_Xtest"] = Xtest.max()
         return answer, Xtrain, ytrain, Xtest, ytest
 
     """
@@ -121,11 +121,18 @@ class Section1:
         # Enter your code and fill the `answer` dictionary
 
         answer = {}
-        answer["clf"] = None  # the estimator (classifier instance)
-        answer["cv"] = None  # the cross validator instance
-        # the dictionary with the scores  (a dictionary with
-        # keys: 'mean_fit_time', 'std_fit_time', 'mean_accuracy', 'std_accuracy'.
-        answer["scores"] = None
+        clf = DecisionTreeClassifier(random_state=42)
+        cv = KFold(n_splits=5, shuffle=True, random_state=42)
+        cv_results = cross_validate(clf, X, y, cv=cv, return_train_score=False)
+        
+        mean_fit_time = np.mean(cv_results['fit_time'])
+        std_fit_time = np.std(cv_results['fit_time'])
+        mean_accuracy = np.mean(cv_results['test_score'])
+        std_accuracy = np.std(cv_results['test_score'])
+        
+        answer["clf"] = clf
+        answer["cv"] = cv
+        answer["scores"] = {'mean_fit_time':mean_fit_time, 'std_fit_time':std_fit_time, 'mean_accuracy':mean_accuracy, 'std_accuracy':std_accuracy}
         return answer
 
     # ---------------------------------------------------------
@@ -140,7 +147,14 @@ class Section1:
         y: NDArray[np.int32],
     ):
         # Enter your code and fill the `answer` dictionary
+        clf = DecisionTreeClassifier(random_state=42)
+        cv = ShuffleSplit(n_splits=5, random_state=42)
+        cv_results = cross_validate(clf, X, y, cv=cv, return_train_score=False)
 
+        mean_fit_time = np.mean(cv_results['fit_time'])
+        std_fit_time = np.std(cv_results['fit_time'])
+        mean_accuracy = np.mean(cv_results['test_score'])
+        std_accuracy = np.std(cv_results['test_score'])
         # Answer: same structure as partC, except for the key 'explain_kfold_vs_shuffle_split'
 
         answer = {}
