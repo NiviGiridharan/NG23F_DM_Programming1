@@ -157,11 +157,23 @@ class Section1:
         std_accuracy = np.std(cv_results['test_score'])
         # Answer: same structure as partC, except for the key 'explain_kfold_vs_shuffle_split'
 
-        answer = {}
-        answer["clf"] = None
-        answer["cv"] = None
-        answer["scores"] = None
-        answer["explain_kfold_vs_shuffle_split"] = None
+        answer = {
+        "clf": clf,
+        "cv": cv,
+        "scores": {
+            "mean_fit_time": mean_fit_time,
+            "std_fit_time": std_fit_time,
+            "mean_accuracy": mean_accuracy,
+            "std_accuracy": std_accuracy
+        },
+        "explain_kfold_vs_shuffle_split": (
+            "K-fold cross-validation splits the data into k subsets and uses k-1 subsets for training "
+            "and the remaining one subset for testing, repeating this process k times. Shuffle-split cross-validation "
+            "randomly splits the data into train/test sets multiple times, which can be useful when the dataset "
+            "is small or has imbalanced classes. However, it might not cover all data points in the test set "
+            "if the number of splits is small, and it might not be suitable for tasks with time series data."
+            )
+        }
         return answer
 
     # ----------------------------------------------------------------------
