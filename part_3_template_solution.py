@@ -1,10 +1,33 @@
 import numpy as np
 from numpy.typing import NDArray
 from typing import Any
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split
+import utils as u
+import new_utils as nu
+from sklearn.svm import SVC
+from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.metrics import make_scorer, f1_score, precision_score, recall_score, confusion_matrix
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.utils.class_weight import compute_class_weight
+
+import seaborn as sns
+
+from sklearn.svm import SVC
+from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.metrics import make_scorer, f1_score, precision_score, recall_score, confusion_matrix
+import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import ShuffleSplit, cross_validate, train_test_split
 from sklearn.metrics import accuracy_score
-import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.metrics import top_k_accuracy_score
 
 """
    In the first two set of tasks, we will narrowly focus on accuracy - 
@@ -73,7 +96,6 @@ class Section3:
         NDArray[np.int32],
     ]:
         """ """
-        # Enter code and return the `answer`` dictionary
 
         answer = {}
 
@@ -96,91 +118,53 @@ class Section3:
         - "score_train" : the topk accuracy score for the training set
         - "score_test" : the topk accuracy score for the testing set
         """
+        answer = {
+    "clf": "Logistic Regression",  
+    "plot_k_vs_score_train": [],
+    "plot_k_vs_score_test": [],
+}
+        clf_lr = LogisticRegression(max_iter=300, multi_class='ovr', random_state=self.seed)
 
-        clf = LogisticRegression(max_iter=1000)  # Instantiate the logistic regression classifier
+        clf_lr.fit(Xtrain, ytrain)
 
-        # Train the classifier
-        clf.fit(Xtrain, ytrain)
+        k_values = [1, 2, 3, 4, 5]
+        scores_train = []
+        scores_test = []
 
-        # Initialize lists to store top-k accuracy scores
-        topk_train_scores = []
-        topk_test_scores = []
+        for k in k_values:
+            score_train = top_k_accuracy_score(ytrain, clf_lr.predict_proba(Xtrain), k=k)
+            score_test = top_k_accuracy_score(ytest, clf_lr.predict_proba(Xtest), k=k)
+            scores_train.append((k, score_train))
+            scores_test.append((k, score_test))
 
-        # Calculate top-k accuracy scores for k=1,2,3,4,5
-        for k in range(1, 6):
-            # Calculate top-k accuracy scores for training set
-            topk_train_score = self.calculate_topk_accuracy(clf, Xtrain, ytrain, k)
-            topk_train_scores.append((k, topk_train_score))
-
-            # Calculate top-k accuracy scores for testing set
-            topk_test_score = self.calculate_topk_accuracy(clf, Xtest, ytest, k)
-            topk_test_scores.append((k, topk_test_score))
-
-        # Plot k vs. score for both training and testing data
-        self.plot_topk_accuracy(topk_train_scores, "Training")
-        self.plot_topk_accuracy(topk_test_scores, "Testing")
-
-        # Comment on the rate of accuracy change
-        text_rate_accuracy_change = "The rate of accuracy change for testing data seems to decrease as k increases."
-
-        # Comment on the usefulness of this metric for the dataset
-        text_is_topk_useful_and_why = "Top-k accuracy is useful for this dataset as it provides insights into how well the model performs when considering multiple possible predictions. This is especially relevant for applications where the exact prediction might not be as critical as having a set of likely predictions."
-
-        # Fill the answer dictionary
-        answer["clf"] = clf
-        answer["plot_k_vs_score_train"] = topk_train_scores
-        answer["plot_k_vs_score_test"] = topk_test_scores
-        answer["text_rate_accuracy_change"] = text_rate_accuracy_change
-        answer["text_is_topk_useful_and_why"] = text_is_topk_useful_and_why
-
-        return answer, Xtrain, ytrain, Xtest, ytest
-
-    def calculate_topk_accuracy(
-        self,
-        clf: Any,  # classifier object
-        X: NDArray[np.floating],
-        y: NDArray[np.int32],
-        k: int
-    ) -> float:
-        """
-        Calculate top-k accuracy score.
-
-        Parameters:
-        - clf: The classifier object.
-        - X: Input data.
-        - y: True labels.
-        - k: Value of k for top-k accuracy.
-
-        Returns:
-        - float: Top-k accuracy score.
-        """
-        # Predict probabilities
-        probs = clf.predict_proba(X)
-
-        # Get top-k predictions
-        topk_preds = np.argsort(-probs, axis=1)[:, :k]
-
-        # Check if true labels are in top-k predictions
-        correct = np.array([y[i] in topk_preds[i] for i in range(len(y))])
-
-        # Calculate top-k accuracy score
-        topk_accuracy = np.mean(correct)
-        return topk_accuracy
-    
-    def plot_topk_accuracy(self, scores: list[tuple[int, float]], title: str):
-        """
-        Plot k vs. top-k accuracy scores.
-
-        Parameters:
-        - scores: List of tuples (k, score).
-        - title: Title of the plot.
-        """
-        ks, accuracies = zip(*scores)
-        plt.plot(ks, accuracies, marker='o', linestyle='-')
+        plt.figure(figsize=(10, 6))
+        plt.plot(*zip(*scores_train), marker='*', color='orange', label='Training Data')
+        plt.plot(*zip(*scores_test), marker='o', color='purple', label='Testing Data')
         plt.xlabel('k')
-        plt.ylabel('Top-k Accuracy')
-        plt.title(f'{title} Top-k Accuracy')
+        plt.ylabel('Top-k Accuracy Score')
+        plt.title('Top-k Accuracy Score vs. k')
+        plt.xticks(k_values)
+        plt.legend()
+        plt.grid(True)
         plt.show()
+
+        rate_of_accuracy_change_test = "infer and comment"
+        is_topk_useful_and_why = "infer and comment"
+
+        answer = {
+            "clf": "clf_lr",
+            "plot_k_vs_score_train": scores_train,
+            "plot_k_vs_score_test": scores_test,
+            "text_rate_accuracy_change": rate_of_accuracy_change_test,
+            "text_is_topk_useful_and_why": is_topk_useful_and_why
+        }
+
+        for k, score_train, score_test in zip(k_values, [s[1] for s in scores_train], [s[1] for s in scores_test]):
+            answer[k] = {
+                "score_train": score_train,
+                "score_test": score_test
+            }
+        return answer, Xtrain, ytrain, Xtest, ytest
 
     # --------------------------------------------------------------------------
     """
