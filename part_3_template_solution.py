@@ -99,7 +99,7 @@ class Section3:
 
         
         # Comment on the rate of accuracy change
-        "text_is_topk_useful_and_why" : "This dataset benefits from top-k accuracy as it offers valuable insights into the model's performance when considering multiple potential predictions. Such a metric holds particular relevance for applications where the precision of exact predictions is not critical, but rather having a range of probable predictions is important."
+        text_is_topk_useful_and_why : "This dataset benefits from top-k accuracy as it offers valuable insights into the model's performance when considering multiple potential predictions. Such a metric holds particular relevance for applications where the precision of exact predictions is not critical, but rather having a range of probable predictions is important."
         
         
         answer["clf"] = clf
